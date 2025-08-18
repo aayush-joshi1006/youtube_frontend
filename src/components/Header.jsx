@@ -8,10 +8,13 @@ import { Link, useNavigate } from "react-router-dom";
 import axiosInstance from "../utiles/axiosInstance";
 import { removeUser } from "../utiles/userSlice";
 import { CgProfile } from "react-icons/cg";
+import { setSearch } from "../utiles/searchSlice";
 
 export default function Header({ sidebar }) {
   const [dropdownOpen, setdropdownOpen] = useState(false);
   const [hovering, setHovering] = useState(false);
+  const [localSearch, setLocalSearch] = useState("");
+
   const timeoutRef = useRef(null);
   const dropdownRef = useRef(null);
 
@@ -20,6 +23,14 @@ export default function Header({ sidebar }) {
   const navigate = useNavigate();
 
   const username = currentUser?.username;
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      dispatch(setSearch(localSearch));
+    }, 500);
+
+    return () => clearTimeout(handler);
+  }, [localSearch, dispatch]);
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -90,6 +101,8 @@ export default function Header({ sidebar }) {
           <input
             type="text"
             placeholder="Search"
+            value={localSearch}
+            onChange={(e) => setLocalSearch(e.target.value)}
             className="text-xl text-[#6a6a6a] outline-none px-7 py-2 w-full"
           />
           <div className="bg-[#222222] text-3xl py-2 px-5 rounded-r-3xl">

@@ -1,6 +1,7 @@
 import { configureStore } from "@reduxjs/toolkit";
 import userReducer from "./userSlice.js";
 import channelReducer from "./channelSlice.js";
+import searchReducer from "./searchSlice.js"
 
 const getFromLocalStorage = () => {
   try {
@@ -33,6 +34,7 @@ const appStore = configureStore({
   reducer: {
     user: userReducer,
     channel: channelReducer,
+    search:searchReducer
   },
   preloadedState: getFromLocalStorage(),
 });
