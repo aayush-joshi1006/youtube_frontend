@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import Thumbnail from "../components/Thumbnail";
 import axiosInstance from "../utiles/axiosInstance";
 import { useSelector } from "react-redux";
+import CategoriesBar from "../components/CategoriesBar";
 
 export default function HomePage() {
   const [videos, setVideos] = useState([]);
@@ -43,26 +44,36 @@ export default function HomePage() {
     video.title.toLowerCase().includes(localSearch.toLowerCase())
   );
 
-  // return (
-  //   <>
-  //     <div className="grid grid-cols-3 gap-7">
-  //       {videos.map((video) => (
-  //         <Thumbnail key={video._id} video={video} />
-  //       ))}
-  //     </div>
-  //   </>
-  // );
+  const handleCategorySelect = async (category) => {
+    try {
+      if (category === "All") {
+        const res = await axiosInstance.get("/video");
+        
+
+        setVideos(res.data);
+      } else {
+        const res = await axiosInstance.get(`/video/tags/${category}`);
+        
+        setVideos(res.data);
+      }
+    } catch (error) {
+      setError("Failed to fetch category videos");
+    }
+  };
   return (
-    <div className="grid grid-cols-3 gap-7">
-      {filteredVideos.length > 0 ? (
-        filteredVideos.map((video) => (
-          <Thumbnail key={video._id} video={video} />
-        ))
-      ) : (
-        <p className="col-span-3 text-center text-gray-500">
-          No videos found matching "{localSearch}"
-        </p>
-      )}
-    </div>
+    <>
+      <CategoriesBar onSelectCategory={handleCategorySelect} />
+      <div className="grid grid-cols-3 gap-7">
+        {filteredVideos.length > 0 ? (
+          filteredVideos.map((video) => (
+            <Thumbnail key={video._id} video={video} />
+          ))
+        ) : (
+          <p className="col-span-3 text-center text-gray-500">
+            No videos found matching "{localSearch}"
+          </p>
+        )}
+      </div>
+    </>
   );
 }

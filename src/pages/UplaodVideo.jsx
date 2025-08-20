@@ -9,6 +9,8 @@ export default function UplaodVideo() {
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+  const [tag1, setTag1] = useState("");
+  const [tag2, setTag2] = useState("");
   const [videoUplaod, setVideoUplaod] = useState(null);
   const [uploadProgress, setUploadProgress] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
@@ -35,10 +37,14 @@ export default function UplaodVideo() {
 
     if (!videoUplaod) return;
 
+    let tags = [tag1.trim(), tag2.trim()].filter((tag) => tag.length > 0);
+
     let formData = new FormData();
     formData.append("title", trimmedTitle);
     formData.append("description", trimmedDescription);
     formData.append("video", videoUplaod);
+    formData.append("tags", tag1);
+    formData.append("tags", tag2);
 
     try {
       const res = await axiosInstance.post("/video/upload", formData, {
@@ -59,6 +65,8 @@ export default function UplaodVideo() {
       setStatusMessage("Video Uploaded Successfully");
       setTitle("");
       setDescription("");
+      setTag1("");
+      setTag2("");
       setVideoUplaod(null);
 
       navigate("/");
@@ -111,6 +119,28 @@ export default function UplaodVideo() {
               onChange={(e) => setDescription(e.target.value)}
               rows="4"
             ></textarea>
+          </div>
+
+          <div className="mb-5">
+            <label className="block mb-2 text-sm font-medium text-gray-900">
+              Tags
+            </label>
+            <div className="flex gap-3">
+              <input
+                type="text"
+                placeholder="Tag 1"
+                value={tag1}
+                onChange={(e) => setTag1(e.target.value)}
+                className="flex-1 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg p-2.5 focus:ring-blue-500 focus:border-blue-500"
+              />
+              <input
+                type="text"
+                placeholder="Tag 2"
+                value={tag2}
+                onChange={(e) => setTag2(e.target.value)}
+                className="flex-1 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg p-2.5 focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
           </div>
 
           <div className="w-full">
