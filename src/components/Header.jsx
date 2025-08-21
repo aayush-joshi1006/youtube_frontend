@@ -9,20 +9,42 @@ import axiosInstance from "../utiles/axiosInstance";
 import { removeUser } from "../utiles/userSlice";
 import { CgProfile } from "react-icons/cg";
 import { setSearch } from "../utiles/searchSlice";
+import { IoMdClose } from "react-icons/io";
 
 export default function Header({ sidebar }) {
   const [dropdownOpen, setdropdownOpen] = useState(false);
   const [hovering, setHovering] = useState(false);
   const [localSearch, setLocalSearch] = useState("");
+  const [showSearch, setShowSearch] = useState(false);
 
   const timeoutRef = useRef(null);
   const dropdownRef = useRef(null);
+  const searchRef = useRef(null);
 
   const currentUser = useSelector((store) => store.user.user);
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  console.log(currentUser);
 
   const username = currentUser?.username;
+
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (searchRef.current && !searchRef.current.contains(event.target)) {
+        setShowSearch(false);
+      }
+    }
+
+    if (showSearch) {
+      document.addEventListener("mousedown", handleClickOutside);
+      document.addEventListener("touchstart", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("touchstart", handleClickOutside);
+    };
+  }, [showSearch, setShowSearch]);
 
   useEffect(() => {
     const handler = setTimeout(() => {
@@ -73,6 +95,7 @@ export default function Header({ sidebar }) {
       const res = await axiosInstance.post("/user/logout");
       console.log("Logout successful", res.data);
       dispatch(removeUser());
+      navigate("/");
     } catch (error) {
       console.error(
         "Registration failed ",
@@ -83,94 +106,153 @@ export default function Header({ sidebar }) {
 
   return (
     <>
-      <nav className="flex justify-between p-3 text-2xl bg-[rgb(15_15_15)] text-[#ffffff] fixed top-0 left-0 w-full z-40">
-        <div className="flex justify-center items-center gap-5">
-          <div
-            className="hover:bg-gray-800 p-2 rounded-full transition-colors duration-500"
+      <nav className="flex justify-between items-center px-4 py-3 bg-black text-white fixed top-0 left-0 w-full z-40 shadow-md">
+        {/* Left Section */}
+        <div className="flex items-center gap-4">
+          <button
+            className="hidden sm:block hover:bg-gray-800 p-2 rounded-full transition"
             onClick={() => sidebar.setToggleSidebar(!sidebar.toggleSidebar)}
           >
-            <GiHamburgerMenu />
-          </div>
+            <GiHamburgerMenu className="text-xl" />
+          </button>
 
-          <div className="flex justify-center items-center gap-1 mx-3 cursor-pointer">
-            <FaYoutube className="text-[#f03]" />
-            <span className="text-2xl font-bold">Youtube</span>
-          </div>
-        </div>
-        <div className="flex justify-center items-center rounded-3xl border border-[#222222] w-1/2">
-          <input
-            type="text"
-            placeholder="Search"
-            value={localSearch}
-            onChange={(e) => setLocalSearch(e.target.value)}
-            className="text-xl text-[#6a6a6a] outline-none px-7 py-2 w-full"
-          />
-          <div className="bg-[#222222] text-3xl py-2 px-5 rounded-r-3xl">
-            <CiSearch className="text-[#e3e3e3]" />
-          </div>
-        </div>
-        {!currentUser ? (
-          <Link
-            to="/signup"
-            className="text-base flex justify-center gap-x-1 bg-gradient-to-r from-purple-400 to-yellow-600 border px-1 rounded-4xl items-center mx-3"
+          <div
+            className="flex items-center gap-1 cursor-pointer"
+            onClick={() => navigate("/")}
           >
-            <CgProfile className="text-3xl" />
-            <span>Sign Up</span>
-          </Link>
-        ) : (
-          <div className="relative mx-3" ref={dropdownRef}>
-            <div
-              className="bg-[#8c6e62] flex justify-center items-center cursor-pointer w-10 h-10 text-xl rounded-full"
-              onClick={() => setdropdownOpen((e) => !e)}
-            >
-              {username.toUpperCase().charAt(0) || ""}
-            </div>
+            <FaYoutube className="text-blue-500 text-3xl" />
+            <span className="text-xl font-bold tracking-wide">YouTube</span>
+          </div>
+        </div>
 
-            <ul
-              className={`flex origin-top transform justify-center flex-col items-start text-base absolute top-full right-0 bg-[rgb(40_40_40)] w-40 font-extralight rounded-xl transition-all duration-500 ${
-                dropdownOpen
-                  ? "scale-y-100 opacity-100"
-                  : "scale-y-0 opacity-0 pointer-events-none"
-              }`}
-              onMouseEnter={() => setHovering(true)}
-              onMouseLeave={() => setHovering(false)}
+        {/* Search Bar (centered) */}
+        <div className="hidden sm:flex absolute left-1/2 transform -translate-x-1/2 w-1/2 max-w-xl">
+          <div className="flex items-center w-full rounded-full border border-gray-700 bg-gray-900 focus-within:border-blue-500 relative">
+            <input
+              type="text"
+              placeholder="Search"
+              value={localSearch}
+              onChange={(e) => setLocalSearch(e.target.value)}
+              className="text-sm sm:text-base bg-transparent outline-none px-4 py-2 w-full text-gray-200 placeholder-gray-500 pr-10"
+            />
+            {/* Search Icon (inside input, right aligned) */}
+            <button className="absolute right-3 text-gray-400 hover:text-white">
+              <CiSearch className="text-xl" />
+            </button>
+          </div>
+        </div>
+
+       
+        {showSearch && (
+          <div
+            className="fixed inset-0 bg-black/50 z-[9999] flex flex-col p-4"
+            onClick={(e) => {
+              e.stopPropagation(); // stops event bubbling
+              setShowSearch(false); // closes search box
+            }}
+          >
+            {/* Prevent closing when clicking inside the search box */}
+            <div
+              className="flex items-center gap-2 bg-white p-2 rounded-lg shadow-md"
+              onClick={(e) => e.stopPropagation()}
             >
-              <li
-                className="px-3 py-3  italic text-sm cursor-auto w-full transition-colors duration-500 rounded-t-2xl"
-                onClick={() => setdropdownOpen(false)}
-              >
-                Welcome, {username}
-              </li>
-              <li
-                className="px-3 py-1 hover:bg-[#0f0f0f] w-full transition-colors duration-500 cursor-pointer"
-                onClick={() => {
-                  setdropdownOpen(false);
-                  navigate("/createChannel");
+              <input
+                type="text"
+                placeholder="Search..."
+                className="flex-1 px-3 py-2 rounded-lg bg-gray-100 text-gray-900 outline-none"
+                value={localSearch}
+                onChange={(e) => setLocalSearch(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    setShowSearch(false);
+                  }
                 }}
-              >
-                Your Channel
-              </li>
-              <li
-                className="px-3 py-1 hover:bg-[#0f0f0f] w-full transition-colors duration-500 cursor-pointer"
-                onClick={() => {
-                  setdropdownOpen(false);
-                  navigate("/upload");
-                }}
-              >
-                Uplaod Video
-              </li>
-              <li
-                className="px-3 py-1 hover:bg-[#0f0f0f] w-full transition-colors duration-500 cursor-pointer rounded-b-2xl"
-                onClick={() => {
-                  setdropdownOpen(false);
-                  handleLogout();
-                }}
-              >
-                Logout
-              </li>
-            </ul>
+                autoFocus
+              />
+              <button onClick={() => setShowSearch(false)}>
+                <IoMdClose className="text-3xl text-gray-700 hover:text-black" />
+              </button>
+            </div>
           </div>
         )}
+
+        {/* Right Section */}
+        <div className="flex items-center gap-4">
+          <button className="sm:hidden" onClick={() => setShowSearch(true)}>
+            <CiSearch className="text-2xl" />
+          </button>
+
+          {!currentUser ? (
+            <Link
+              to="/signup"
+              className="flex items-center gap-1 px-3 py-2 text-sm sm:text-base rounded-full bg-gradient-to-r from-blue-500 to-blue-700 hover:opacity-90 transition"
+            >
+              <CgProfile className="text-lg sm:text-2xl" />
+              <span>Sign Up</span>
+            </Link>
+          ) : (
+            <div className="relative" ref={dropdownRef}>
+              <div
+                className="bg-blue-600 flex justify-center items-center cursor-pointer w-10 h-10 text-lg rounded-full hover:ring-2 hover:ring-blue-400 transition"
+                onClick={() => setdropdownOpen((e) => !e)}
+              >
+                {currentUser.isChannelCreated ? (
+                  <img
+                    src={`${currentUser.channelAvatar}`}
+                    className="w-full h-full object-cover rounded-full border border-gray-700"
+                    alt={`${username}'s avatar`}
+                  />
+                ) : (
+                  <span className="text-white font-bold">
+                    {username?.charAt(0).toUpperCase()}
+                  </span>
+                )}
+              </div>
+
+              {/* Dropdown */}
+              <ul
+                className={`absolute top-12 right-0 bg-gray-900 border border-gray-700 rounded-lg shadow-lg text-sm w-44 transform transition-all duration-300 ${
+                  dropdownOpen
+                    ? "scale-100 opacity-100"
+                    : "scale-95 opacity-0 pointer-events-none"
+                }`}
+                onMouseEnter={() => setHovering(true)}
+                onMouseLeave={() => setHovering(false)}
+              >
+                <li className="px-4 py-2 text-gray-400 italic">
+                  Welcome, {username}
+                </li>
+                <li
+                  className="px-4 py-2 hover:bg-blue-600 cursor-pointer rounded-t-md"
+                  onClick={() => {
+                    setdropdownOpen(false);
+                    navigate("/createChannel");
+                  }}
+                >
+                  Your Channel
+                </li>
+                <li
+                  className="px-4 py-2 hover:bg-blue-600 cursor-pointer"
+                  onClick={() => {
+                    setdropdownOpen(false);
+                    navigate("/upload");
+                  }}
+                >
+                  Upload Video
+                </li>
+                <li
+                  className="px-4 py-2 hover:bg-red-600 cursor-pointer rounded-b-md"
+                  onClick={() => {
+                    setdropdownOpen(false);
+                    handleLogout();
+                  }}
+                >
+                  Logout
+                </li>
+              </ul>
+            </div>
+          )}
+        </div>
       </nav>
     </>
   );

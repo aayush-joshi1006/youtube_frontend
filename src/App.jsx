@@ -7,19 +7,40 @@ function App() {
   const [toggleSidebar, setToggleSidebar] = useState(true);
 
   return (
-    <>
+    
+    <div className="h-screen w-full flex flex-col overflow-hidden transition-colors duration-500">
+      {/* Header */}
       <Header sidebar={{ toggleSidebar, setToggleSidebar }} />
-      <div className="flex">
-        <SideBar sidebar={{ toggleSidebar }} />
+
+      {/* Sidebar + Main Content */}
+      <div
+        className="
+          flex flex-1 mt-16 overflow-hidden
+          flex-col-reverse sm:flex-row   /* mobile: sidebar below, desktop: sidebar left */
+        "
+      >
+        {/* Sidebar */}
         <div
-          className={`transition-all duration-700 mt-16 py-2 w-full ${
-            toggleSidebar ? "ml-16" : "ml-72"
-          }`}
+          className={`
+            transition-all duration-500 shrink-0
+            ${toggleSidebar ? "w-16" : "w-72"}
+            sm:block hidden   /* hide sidebar by default on mobile */
+          `}
         >
+          <SideBar sidebar={{ toggleSidebar, setToggleSidebar }} />
+        </div>
+
+        {/* Main Content */}
+        <main className="flex-1 overflow-y-auto">
           <Outlet />
+        </main>
+
+        {/* Mobile Sidebar (below content) */}
+        <div className="block sm:hidden">
+          <SideBar sidebar={{ toggleSidebar, setToggleSidebar }} />
         </div>
       </div>
-    </>
+    </div>
   );
 }
 

@@ -38,7 +38,7 @@ export default function Video() {
 
   return (
     <>
-      <div>
+      {/* <div>
         <video
           controls
           className="w-full shadow-lg h-[80vh]"
@@ -53,6 +53,39 @@ export default function Video() {
           <Comments videoId={videoDetail._id} />
         </div>
         <div>Recommended videos</div>
+      </div> */}
+      <div className="bg-gray-100 min-h-screen">
+        {/* Video Player */}
+        <div className="w-full flex justify-center bg-black">
+          <video
+            controls
+            className="w-full max-w-5xl rounded-lg shadow-xl aspect-video"
+            src={videoDetail.videoUrl}
+          >
+            Your browser does not support the video tag.
+          </video>
+        </div>
+
+        {/* Content Section */}
+        <div className="max-w-5xl mx-auto px-4 py-6">
+          {/* Description */}
+          <div className="bg-white rounded-xl shadow-md p-5 mb-6">
+            <h1 className="text-xl font-semibold mb-3 text-gray-900">
+              {videoDetail.title || "Untitled Video"}
+            </h1>
+            <p className="text-gray-700 leading-relaxed">
+              {videoDetail.description}
+            </p>
+          </div>
+
+          {/* Comments */}
+          <div className="bg-white rounded-xl shadow-md p-5">
+            <h2 className="text-lg font-semibold mb-4 text-gray-900">
+              Comments
+            </h2>
+            <Comments videoId={videoDetail._id} />
+          </div>
+        </div>
       </div>
     </>
   );

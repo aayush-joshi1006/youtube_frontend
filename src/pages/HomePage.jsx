@@ -30,14 +30,14 @@ export default function HomePage() {
 
   if (Loading) {
     return (
-      <div className="flex justify-center items-center animate-pulse text-black">
+      <div className="flex justify-center items-center h-screen text-gray-300 text-lg animate-pulse">
         Loading videos...
       </div>
     );
   }
 
   if (error) {
-    return <div>{error}</div>;
+    return <div className="text-center text-red-400">{error}</div>;
   }
 
   const filteredVideos = videos.filter((video) =>
@@ -48,12 +48,11 @@ export default function HomePage() {
     try {
       if (category === "All") {
         const res = await axiosInstance.get("/video");
-        
 
         setVideos(res.data);
       } else {
         const res = await axiosInstance.get(`/video/tags/${category}`);
-        
+
         setVideos(res.data);
       }
     } catch (error) {
@@ -61,19 +60,30 @@ export default function HomePage() {
     }
   };
   return (
-    <>
-      <CategoriesBar onSelectCategory={handleCategorySelect} />
-      <div className="grid grid-cols-3 gap-7">
+    <div className="flex flex-col overflow-x-hidden">
+      {/* Category Filter */}
+      <div className="sticky z-10 bg-white w-full overflow-x-auto overflow-y-hidden">
+        <CategoriesBar onSelectCategory={handleCategorySelect} />
+      </div>
+
+      {/* Videos Grid */}
+      <div
+        className="grid gap-6
+              grid-cols-1
+              sm:grid-cols-2
+              lg:grid-cols-3
+              xl:grid-cols-4"
+      >
         {filteredVideos.length > 0 ? (
           filteredVideos.map((video) => (
             <Thumbnail key={video._id} video={video} />
           ))
         ) : (
-          <p className="col-span-3 text-center text-gray-500">
+          <p className="col-span-full text-center text-gray-500">
             No videos found matching "{localSearch}"
           </p>
         )}
       </div>
-    </>
+    </div>
   );
 }
