@@ -7,6 +7,9 @@ import { AiFillLike } from "react-icons/ai";
 import { AiFillDislike } from "react-icons/ai";
 import { formatDistanceToNow } from "date-fns";
 import formatViews from "../utiles/formatViews";
+import { useSelector } from "react-redux";
+import Loading from "./Loading";
+import { toast } from "react-toastify";
 
 export default function Video() {
   const { id } = useParams();
@@ -16,15 +19,15 @@ export default function Video() {
   const [showFullDesc, setShowFullDesc] = useState(false);
 
   const navigate = useNavigate();
+  const currentUser = useSelector((store) => store.user.user);
 
   useEffect(() => {
     const fetchVideo = async () => {
       try {
         const res = await axiosInstance.get(`/video/${id}`);
-        console.log("Video data", res.data);
         setVideoDetail(res.data);
       } catch (error) {
-        console.error(
+        toast.error(
           "Unable to fetch the Video",
           error.response?.data?.message || error.message
         );
@@ -36,12 +39,26 @@ export default function Video() {
     fetchVideo();
   }, [id]);
 
+  useEffect(() => {
+    const addView = async () => {
+      if (currentUser && videoDetail?._id) {
+        try {
+          await axiosInstance.put(`/video/${videoDetail?._id}/view`);
+        } catch (err) {
+          toast.error("Error updating view:", err);
+        }
+      }
+    };
+
+    addView();
+  }, [currentUser, videoDetail?._id]);
+
   if (errorMessage) {
     return <div className="text-red-500 text-center mt-4">{errorMessage}</div>;
   }
 
   if (!videoDetail) {
-    return <div className="text-center mt-4">Loading video...</div>;
+    return <Loading />;
   }
 
   return (
@@ -50,6 +67,8 @@ export default function Video() {
       <div className="w-full flex justify-center bg-black">
         <video
           controls
+          autoPlay
+          muted
           className="w-full max-w-7xl rounded-lg shadow-xl aspect-video"
           src={videoDetail.videoUrl}
         >

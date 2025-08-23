@@ -10,6 +10,7 @@ import { removeUser } from "../utiles/userSlice";
 import { CgProfile } from "react-icons/cg";
 import { setSearch } from "../utiles/searchSlice";
 import { IoMdClose } from "react-icons/io";
+import { toast } from "react-toastify";
 
 export default function Header({ sidebar }) {
   const [dropdownOpen, setdropdownOpen] = useState(false);
@@ -24,7 +25,6 @@ export default function Header({ sidebar }) {
   const currentUser = useSelector((store) => store.user.user);
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  console.log(currentUser);
 
   const username = currentUser?.username;
 
@@ -93,11 +93,11 @@ export default function Header({ sidebar }) {
 
     try {
       const res = await axiosInstance.post("/user/logout");
-      console.log("Logout successful", res.data);
       dispatch(removeUser());
       navigate("/");
+      toast.success("Logged out successfully")
     } catch (error) {
-      console.error(
+      toast.error(
         "Registration failed ",
         error.response?.data || error.message
       );
@@ -142,7 +142,6 @@ export default function Header({ sidebar }) {
           </div>
         </div>
 
-       
         {showSearch && (
           <div
             className="fixed inset-0 bg-black/50 z-[9999] flex flex-col p-4"

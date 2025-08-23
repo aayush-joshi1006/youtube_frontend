@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import axiosInstance from "../utiles/axiosInstance";
 import { addUser } from "../utiles/userSlice";
+import { toast } from "react-toastify";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -36,17 +37,17 @@ export default function Login() {
 
     try {
       const res = await axiosInstance.post("/user/login", currentUser);
-      console.log("User signed in: ", res.data);
       dispatch(addUser(res.data));
       setEmail("");
       setPassword("");
       setError(null);
+      toast.success("Login successful")
       navigate("/");
     } catch (error) {
       setError(
         error.response?.data.message || error.message || "Something went wrong"
       );
-      console.error(
+      toast.error(
         "Registration failed ",
         error.response?.data || error.message
       );

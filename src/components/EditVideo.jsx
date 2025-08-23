@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import axiosInstance from "../utiles/axiosInstance";
+import {toast} from "react-toastify"
 
 export default function EditVideo({ video, onClose, onUpdate }) {
   const [title, setTitle] = useState(video?.title || "");
@@ -14,20 +15,24 @@ export default function EditVideo({ video, onClose, onUpdate }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    setLoading(true);
+     setLoading(true);
+     setError("");
+     const cleanedTags = [
+       ...new Set(tags.map((t) => t.trim()).filter(Boolean)),
+     ].slice(0, 2);
 
     try {
       const res = await axiosInstance.put(`/video/${video._id}`, {
         title: title.trim(),
         description: description.trim(),
-        tags: tags.map((tag) => tag.trim()),
+        tags: cleanedTags,
       });
 
-      // ✅ pass updated video back to parent
       onUpdate(res.data.video);
+    toast.success("Edit Successful")
       onClose();
-    } catch (error) {
-      console.error("Error updating video:", error);
+    } catch (err) {
+      toast.error("Error updating video:", err);
       setError(err.response?.data?.message || "Failed to update video");
     } finally {
       setLoading(false);

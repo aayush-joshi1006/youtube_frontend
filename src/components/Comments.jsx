@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { CiMenuKebab } from "react-icons/ci";
 import { formatDistanceToNow } from "date-fns";
 import defaultAvatar from "../assets/default-avatar.jpg";
+import { toast } from "react-toastify";
 
 export default function Comments({ videoId }) {
   const [comments, setComments] = useState([]);
@@ -38,9 +39,8 @@ export default function Comments({ videoId }) {
       try {
         const res = await axiosInstance.get(`/comment?videoId=${videoId}`);
         setComments(res.data.comments || []);
-        console.log(res.data);
       } catch (error) {
-        setError(error.response?.data?.message || error.message);
+        toast.error(error.response?.data?.message || error.message);
       }
     };
     getAllComments();
@@ -60,9 +60,10 @@ export default function Comments({ videoId }) {
         text: trimmedComment,
       });
       setComments((prev) => [res.data.newComment, ...prev]);
+      toast.success("Comment added successfully");
       setCurrentComment("");
     } catch (error) {
-      console.error(error);
+      toast.error(error);
     }
   };
 
@@ -75,8 +76,9 @@ export default function Comments({ videoId }) {
     try {
       setComments((prev) => prev.filter((c) => c._id !== targetComment));
       await axiosInstance.delete(`/comment/${targetComment}`);
+      toast.success("Comment deleted successfully");
     } catch (error) {
-      console.error(error);
+      toast.error(error);
     } finally {
       setShowConfirm(false);
       setTargetComment(null);
@@ -103,8 +105,9 @@ export default function Comments({ videoId }) {
       );
       setEditingId(null);
       setEditText("");
+      toast.success("Comment editted");
     } catch (err) {
-      console.error(err);
+      toast.error(err);
     }
   };
 
@@ -140,9 +143,7 @@ export default function Comments({ videoId }) {
             <div className="flex-1 flex gap-3">
               {/* Channel Avatar */}
               <img
-                src={
-                  comment.user?.channel?.channelAvatar || defaultAvatar
-                }
+                src={comment.user?.channel?.channelAvatar || defaultAvatar}
                 alt="avatar"
                 className="w-10 h-10 rounded-full object-cover"
               />
@@ -154,9 +155,9 @@ export default function Comments({ videoId }) {
                     {comment.user?.username || "Anonymous"}
                   </p>
                   <span className="text-sm text-gray-500">
-                   {formatDistanceToNow(new Date(comment?.createdAt), {
-                               addSuffix: true,
-                             })}
+                    {formatDistanceToNow(new Date(comment?.createdAt), {
+                      addSuffix: true,
+                    })}
                   </span>
                 </div>
 

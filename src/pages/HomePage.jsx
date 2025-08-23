@@ -3,10 +3,11 @@ import Thumbnail from "../components/Thumbnail";
 import axiosInstance from "../utiles/axiosInstance";
 import { useSelector } from "react-redux";
 import CategoriesBar from "../components/CategoriesBar";
+import Loading from "./Loading";
 
 export default function HomePage() {
   const [videos, setVideos] = useState([]);
-  const [Loading, setLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
   const localSearch = useSelector((store) => store.search.value);
@@ -15,29 +16,26 @@ export default function HomePage() {
     const fetchVideos = async () => {
       try {
         const res = await axiosInstance.get("/video");
-
-        console.log(res.data);
-
         setVideos(res.data);
       } catch (error) {
         setError("Failed to load the videos");
       } finally {
-        setLoading(false);
+        setIsLoading(false);
       }
     };
     fetchVideos();
   }, []);
 
-  if (Loading) {
+  if (isLoading) {
     return (
-      <div className="flex justify-center items-center h-screen text-gray-300 text-lg animate-pulse">
-        Loading videos...
-      </div>
+      <>
+        <Loading />
+      </>
     );
   }
 
   if (error) {
-    return <div className="text-center text-red-400">{error}</div>;
+    return <div className="text-center text-red-400 p-5">{error}</div>;
   }
 
   const filteredVideos = videos.filter((video) =>
@@ -79,7 +77,7 @@ export default function HomePage() {
             <Thumbnail key={video._id} video={video} />
           ))
         ) : (
-          <p className="col-span-full text-center text-gray-500">
+          <p className="col-span-full p-5 text-center text-gray-500">
             No videos found matching "{localSearch}"
           </p>
         )}

@@ -12,11 +12,14 @@ import appStore from "./utiles/appStore.js";
 import CreateChannel from "./pages/CreateChannel.jsx";
 import UploadVideo from "./pages/UplaodVideo.jsx";
 import { Provider } from "react-redux";
+import Error from "./pages/Error.jsx";
+import { ToastContainer } from "react-toastify";
 
 const router = createBrowserRouter([
   {
     path: "/",
     element: <App />,
+    errorElement: <Error />,
     children: [
       {
         path: "/",
@@ -55,5 +58,16 @@ createRoot(document.getElementById("root")).render(
     <Provider store={appStore}>
       <RouterProvider router={router} />
     </Provider>
+    <ToastContainer
+      position="top-right"
+      autoClose={2000}
+      hideProgressBar={false}
+      newestOnTop={false}
+      closeOnClick
+      pauseOnFocusLoss
+      draggable
+      pauseOnHover
+      theme="dark"
+    />
   </StrictMode>
 );

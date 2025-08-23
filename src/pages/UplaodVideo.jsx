@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import axiosInstance from "../utiles/axiosInstance";
+import { toast } from "react-toastify";
 
 export default function UplaodVideo() {
   const user = useSelector((store) => store.user.user);
@@ -79,9 +80,8 @@ export default function UplaodVideo() {
           setUploadProgress(present);
         },
       });
-      console.log("Video Uploaded", res.data);
       setUploadProgress("Video Uploaded Successfully");
-
+      toast.success("Video uploaded successfully")
       setUploadProgress(null);
       setStatusMessage("Video Uploaded Successfully");
       setTitle("");
@@ -94,7 +94,7 @@ export default function UplaodVideo() {
     } catch (error) {
       const errorMsg =
         error.response?.data?.message || "Upload failed. Try again.";
-      console.error("Upload Failed:", errorMsg);
+      toast.error("Upload Failed:", errorMsg);
       setStatusMessage(errorMsg);
     } finally {
       setIsUploading(false);

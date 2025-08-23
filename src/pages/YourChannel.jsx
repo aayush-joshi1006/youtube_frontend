@@ -8,6 +8,7 @@ import formatViews from "../utiles/formatViews.js";
 import { BsThreeDotsVertical } from "react-icons/bs";
 import { useSelector } from "react-redux";
 import EditVideo from "../components/EditVideo.jsx";
+import { toast } from "react-toastify";
 
 export default function YourChannel() {
   const { id } = useParams();
@@ -41,11 +42,9 @@ export default function YourChannel() {
       try {
         const res = await axiosInstance.get(`/channel/${id}`);
         setChannel(res.data.channel);
-        console.log(res.data);
-        
       } catch (error) {
         setError(error.response?.data.message || "Something went wrong");
-        console.error(
+        toast.error(
           "Registration failed ",
           error.response?.data || error.message
         );
@@ -99,9 +98,9 @@ export default function YourChannel() {
       }));
 
       await axiosInstance.delete(`/video/delete/${targetVideo}`);
+      toast.success("Video deleted successfully");
     } catch (error) {
-      console.error("Error deleting video", error);
-      alert(error.response?.data?.message || "Failed to delete video");
+      toast.error("Error deleting video", error);
     } finally {
       setShowConfirm(false);
       setTargetVideo(null);
@@ -113,7 +112,8 @@ export default function YourChannel() {
     setShowEdit(true);
   };
 
-  if (error) return <div> Error: {error}</div>;
+  if (error)
+    return <div className="text-center mt-4 text-red-500"> Error: {error}</div>;
   if (!channel) return <Loading />;
 
   return (
