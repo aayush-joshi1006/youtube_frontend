@@ -1,10 +1,13 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import axiosInstance from "../utiles/axiosInstance";
 import Loading from "./Loading";
 import { formatDistanceToNow } from "date-fns";
 import formatDuration from "../utiles/formatDuration.js";
 import formatViews from "../utiles/formatViews.js";
+import { BsThreeDotsVertical } from "react-icons/bs";
+import { useSelector } from "react-redux";
+import EditVideo from "../components/EditVideo.jsx";
 
 export default function YourChannel() {
   const { id } = useParams();
@@ -13,8 +16,17 @@ export default function YourChannel() {
   const [error, setError] = useState(null);
   const [message, setMessage] = useState("");
   const [loaded, setLoaded] = useState(false);
+  const [openDropdown, setOpenDropdown] = useState(null);
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [targetVideo, setTargetVideo] = useState(null);
+  const [showEdit, setShowEdit] = useState(false);
+  const [editingVideo, setEditingVideo] = useState(null);
+
+  const dropdownRef = useRef(null);
 
   const navigate = useNavigate();
+
+  const currentUser = useSelector((store) => store.user.user);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -29,6 +41,8 @@ export default function YourChannel() {
       try {
         const res = await axiosInstance.get(`/channel/${id}`);
         setChannel(res.data.channel);
+        console.log(res.data);
+        
       } catch (error) {
         setError(error.response?.data.message || "Something went wrong");
         console.error(
@@ -40,8 +54,6 @@ export default function YourChannel() {
     if (id) fetchChannel();
   }, [id]);
 
-  console.log(channel);
-
   useEffect(() => {
     if (channel) {
       setMessage(
@@ -52,53 +64,59 @@ export default function YourChannel() {
     }
   }, [channel]);
 
+  // --- Close dropdown on outside click
+  useEffect(() => {
+    function handleClickOutside(e) {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setOpenDropdown(null);
+      }
+    }
+
+    if (openDropdown) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [openDropdown]);
+
+  // --- Auto close after 3 seconds
+  useEffect(() => {
+    if (openDropdown) {
+      const timer = setTimeout(() => setOpenDropdown(null), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [openDropdown]);
+
+  const handleDeleteClick = (videoId) => {
+    setTargetVideo(videoId);
+    setShowConfirm(true);
+  };
+
+  const confirmDelete = async () => {
+    try {
+      setChannel((prev) => ({
+        ...prev,
+        videos: prev.videos.filter((v) => v._id !== targetVideo),
+      }));
+
+      await axiosInstance.delete(`/video/delete/${targetVideo}`);
+    } catch (error) {
+      console.error("Error deleting video", error);
+      alert(error.response?.data?.message || "Failed to delete video");
+    } finally {
+      setShowConfirm(false);
+      setTargetVideo(null);
+    }
+  };
+
+  const handleEditClick = (video) => {
+    setEditingVideo(video);
+    setShowEdit(true);
+  };
+
   if (error) return <div> Error: {error}</div>;
   if (!channel) return <Loading />;
 
   return (
-    // <>
-    //   <div
-    //     className="h-64 relative border-b-2 shadow-xl"
-    //     style={{ backgroundImage: `url(${channel.channelBanner})` }}
-    //   >
-    //     <img
-    //       src={channel.channelAvatar}
-    //       alt="Profile pic"
-    //       className="w-32 h-32 rounded-full object-cover object-center absolute -bottom-14 left-16 border shadow-2xl"
-    //     />
-
-    //     <div className="absolute -bottom-24 left-48">
-    //       <h2 className="text-2xl font-bold">{channel.channelName}</h2>
-    //       <p className="text-gray-500 italic">{channel.description}</p>
-    //       <p className="font-extralight italic text-sm">{message}</p>
-    //     </div>
-    //   </div>
-    //   <section className="grid grid-cols-3 gap-7 mt-32 px-5 container mx-auto">
-    //     {channel.videos.map((video) => (
-    //       <div
-    //         key={video._id}
-    //         onClick={() => navigate(`/video/${video._id}`)}
-    //         className={`flex relative origin-top transform flex-col justify-center items-center hover:drop-shadow-2xl hover:-translate-y-0.5 p-2 transition-all duration-1000 rounded-xl ${
-    //           loaded ? "scale-100 opacity-100" : "scale-0 opacity-0"
-    //         }`}
-    //       >
-    //         <img src={video.thumbnailUrl} alt="" className="w-96 rounded-lg" />
-    //         <span className="bg-black text-white absolute bottom-20 right-14 p-1 rounded-lg">
-    //           {formatDuration(video.duration)}
-    //         </span>
-    //         <div className="flex flex-col justify-center items-start px-14 w-full mt-4">
-    //           <h2 className="font-extrabold text-xl">{video.title}</h2>
-    //           <p className="text-[#717171]">
-    //             {video.views.length} views •{" "}
-    //             {`${formatDistanceToNow(new Date(video.createdAt), {
-    //               addSuffix: true,
-    //             })}`}
-    //           </p>
-    //         </div>
-    //       </div>
-    //     ))}
-    //   </section>
-    // </>
     <>
       <div
         className="relative h-64 border-b-2 shadow-xl"
@@ -119,7 +137,7 @@ export default function YourChannel() {
         />
 
         {/* Channel Info */}
-        <div className="absolute -bottom-24 left-44 pr-6 flex flex-col max-w-xl">
+        <div className="absolute -bottom-26 left-44 pr-6 flex flex-col max-w-xl">
           <h2 className="text-2xl font-bold">{channel.channelName}</h2>
           <p className="text-gray-600 italic line-clamp-2">
             {channel.description}
@@ -142,6 +160,7 @@ export default function YourChannel() {
               loaded ? "scale-100 opacity-100" : "scale-0 opacity-0"
             }`}
             onClick={() => navigate(`/video/${video?._id}`)}
+            key={video?._id}
           >
             {/* Thumbnail */}
             <div className="relative w-full overflow-hidden rounded-xl">
@@ -157,19 +176,123 @@ export default function YourChannel() {
             </div>
 
             {/* Video Info */}
-            <div className="flex flex-col gap-1 mt-3 px-1">
-              <h2 className="font-semibold truncate text-sm sm:text-base line-clamp-2">
-                {video?.title}
-              </h2>
-              <p className="text-gray-500 text-sm">
-                {formatViews(video?.views?.length || 0)} views •{" "}
-                {formatDistanceToNow(new Date(video?.createdAt), {
-                  addSuffix: true,
-                })}
-              </p>
+            <div className="flex justify-between items-center">
+              <div className="flex flex-col gap-1 mt-3 px-1">
+                <h2 className="font-semibold truncate text-sm sm:text-base line-clamp-2">
+                  {video?.title}
+                </h2>
+                <p className="text-gray-500 text-sm">
+                  {formatViews(video?.views?.length || 0)} views •{" "}
+                  {formatDistanceToNow(new Date(video?.createdAt), {
+                    addSuffix: true,
+                  })}
+                </p>
+              </div>
+              {currentUser.channel === channel._id ? (
+                <div
+                  className="flex relative justify-center items-center p-1 hover:bg-gray-300 rounded-full cursor-pointer"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setOpenDropdown(
+                      openDropdown === video._id ? null : video._id
+                    );
+                  }}
+                >
+                  <BsThreeDotsVertical />
+
+                  {openDropdown === video._id && (
+                    <div
+                      className="absolute right-7 bottom-0 bg-white border rounded-md shadow-lg z-50 w-32"
+                      onClick={(e) => e.stopPropagation()}
+                      ref={dropdownRef}
+                    >
+                      <button
+                        className="w-full px-4 py-2 text-left hover:bg-gray-100"
+                        onClick={() => {
+                          handleEditClick(video);
+                          setOpenDropdown(null);
+                        }}
+                      >
+                        Edit
+                      </button>
+                      <button
+                        className="w-full px-4 py-2 text-left text-red-500 hover:bg-red-100"
+                        onClick={() => handleDeleteClick(video._id)}
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                ""
+              )}
             </div>
           </div>
         ))}
+        {showConfirm && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+            onClick={() => setShowConfirm(false)}
+          >
+            <div
+              className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <h3 className="text-lg font-semibold text-gray-900">
+                Delete video?
+              </h3>
+              <p className="mt-1 text-sm text-gray-600">
+                This action can’t be undone.
+              </p>
+
+              <div className="mt-6 flex justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => setShowConfirm(false)}
+                  className="rounded-lg border px-4 py-2 text-sm hover:bg-gray-100"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={confirmDelete}
+                  className="rounded-lg bg-red-600 px-4 py-2 text-sm text-white hover:bg-red-700"
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {showEdit && editingVideo && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+            onClick={() => setShowEdit(false)}
+          >
+            <div
+              className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Import & Render EditVideo Component */}
+              <EditVideo
+                video={editingVideo}
+                onClose={() => setShowEdit(false)}
+                onUpdate={(updated) => {
+                  // update local state immediately after save
+                  setChannel((prev) => ({
+                    ...prev,
+                    videos: prev.videos.map((v) =>
+                      v._id === updated._id ? updated : v
+                    ),
+                  }));
+                  setShowEdit(false);
+                }}
+              />
+            </div>
+          </div>
+        )}
       </section>
     </>
   );

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import axiosInstance from "../utiles/axiosInstance";
 import Comments from "../components/Comments";
 import defaultAvatar from "../assets/default-avatar.jpg";
@@ -14,6 +14,8 @@ export default function Video() {
   const [videoDetail, setVideoDetail] = useState(null);
   const [errorMessage, setErrorMessage] = useState("");
   const [showFullDesc, setShowFullDesc] = useState(false);
+
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchVideo = async () => {
@@ -72,7 +74,12 @@ export default function Video() {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-gray-200 pb-4 gap-3">
           <div className="flex items-center justify-between gap-3 w-full sm:justify-start">
             {/* Left side (avatar + name) */}
-            <div className="flex items-center gap-3">
+            <div
+              className="flex items-center gap-3 cursor-pointer"
+              onClick={() =>
+                navigate(`/channel/${videoDetail?.channelId?._id}`)
+              }
+            >
               <img
                 src={videoDetail?.channelId?.channelAvatar || defaultAvatar}
                 alt="Channel Avatar"
@@ -118,7 +125,15 @@ export default function Video() {
               </button>
             )}
           </p>
-          <p className="text-blue-600">{`#${videoDetail.tags[0]} #${videoDetail.tags[1]}`}</p>
+          {videoDetail?.tags && videoDetail.tags.length > 0 && (
+            <p className="text-blue-600">
+              {videoDetail.tags
+                .filter((tag) => tag && tag.trim() !== "") // remove empty strings
+                .slice(0, 2) // only first two
+                .map((tag, index) => `#${tag}`)
+                .join(" ")}
+            </p>
+          )}
         </div>
 
         {/* Comments */}
