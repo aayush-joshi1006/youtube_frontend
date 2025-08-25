@@ -1,38 +1,51 @@
 import React, { useState } from "react";
-import axiosInstance from "../utiles/axiosInstance";
-import {toast} from "react-toastify"
 
+import { toast } from "react-toastify";
+
+import axiosInstance from "../utiles/axiosInstance";
+
+// componet for editing the video details
 export default function EditVideo({ video, onClose, onUpdate }) {
+  // states for title,description and tags of the video
   const [title, setTitle] = useState(video?.title || "");
   const [description, setDescription] = useState(video?.description || "");
   const [tags, setTags] = useState(() => {
     const initial = video?.tags || [];
     return [initial[0] || "", initial[1] || ""];
   });
+  // for managing loading state and error
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
+  // function for submitting the edited properties
   const handleSubmit = async (e) => {
+    // for preventing the default action
     e.preventDefault();
-
-     setLoading(true);
-     setError("");
-     const cleanedTags = [
-       ...new Set(tags.map((t) => t.trim()).filter(Boolean)),
-     ].slice(0, 2);
+    // initializing the loading
+    setLoading(true);
+    setError("");
+    // only selects the the unique non empty values any returns as a array
+    const cleanedTags = [
+      ...new Set(tags.map((t) => t.trim()).filter(Boolean)),
+    ].slice(0, 2);
 
     try {
+      // making the request for editng the video data
       const res = await axiosInstance.put(`/video/${video._id}`, {
         title: title.trim(),
         description: description.trim(),
         tags: cleanedTags,
       });
-
+      // sending the updaated data base to parent component for applying changes to frontend
       onUpdate(res.data.video);
-    toast.success("Edit Successful")
+      toast.success("Edit Successful");
+      // for closing the dialoge box of editing
       onClose();
     } catch (err) {
-      toast.error("Error updating video:", err);
+      // in case the update fails
+      toast.error(
+        err.response?.data?.message || err.message || "Something went wrong"
+      );
       setError(err.response?.data?.message || "Failed to update video");
     } finally {
       setLoading(false);
@@ -67,7 +80,7 @@ export default function EditVideo({ video, onClose, onUpdate }) {
           />
         </div>
 
-        {/* Tags (2 inputs side by side) */}
+        {/* Tags */}
         <div>
           <label className="block text-sm font-medium mb-1">Tags</label>
           <div className="flex gap-2">
@@ -87,8 +100,9 @@ export default function EditVideo({ video, onClose, onUpdate }) {
             />
           </div>
         </div>
+        {/* for displaying error */}
         {error && <p className="text-red-600 text-sm">{error}</p>}
-        {/* Buttons */}
+        {/* Buttons submit and cancel button */}
         <div className="flex justify-end gap-3">
           <button
             type="button"

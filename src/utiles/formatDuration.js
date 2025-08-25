@@ -1,8 +1,9 @@
+// function for setting duration in hh:mm:ss format
 export default function formatDuration(durationInSeconds) {
   const hours = Math.floor(durationInSeconds / 3600);
   const minutes = Math.floor((durationInSeconds % 3600) / 60);
   const seconds = Math.floor(durationInSeconds % 60);
-
+// padding with 0 eg. 01:01
   const pad = (num) => String(num).padStart(2, "0");
 
   if (hours > 0) {

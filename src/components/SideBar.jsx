@@ -1,16 +1,21 @@
-import { CgProfile } from "react-icons/cg";
-import { HiHome } from "react-icons/hi";
-import { NavLink } from "react-router-dom";
-import { FiUpload } from "react-icons/fi";
 import { useSelector } from "react-redux";
 
-export default function SideBar({ sidebar }) {
-  const currentUser = useSelector((store) => store.user.user);
+import { NavLink } from "react-router-dom";
 
+import { CgProfile } from "react-icons/cg";
+import { HiHome } from "react-icons/hi";
+import { FiUpload } from "react-icons/fi";
+
+// Sidebar component
+export default function SideBar({ sidebar }) {
+  // getting current user from redux store
+  const currentUser = useSelector((store) => store.user.user);
+  // setting the default naviation path to login page
   let channelLink = "/login";
   let uploadLink = "/login";
-
+  // if current user exists
   if (currentUser) {
+    // if channel is created
     if (currentUser.isChannelCreated) {
       channelLink = `/channel/${currentUser.channel}`;
       uploadLink = "/upload";
@@ -27,6 +32,7 @@ export default function SideBar({ sidebar }) {
           sidebar.toggleSidebar ? "w-16" : "w-72"
         }`}
       >
+        {/* Side bar */}
         <ul className="mt-20 space-y-2">
           {/* Home */}
           <li>

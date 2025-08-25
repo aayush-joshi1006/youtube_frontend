@@ -1,55 +1,70 @@
-import { Link, useNavigate } from "react-router-dom";
-import { FaYoutube } from "react-icons/fa";
 import { useEffect, useState } from "react";
+
+import { Link, useNavigate } from "react-router-dom";
+
 import { useDispatch, useSelector } from "react-redux";
-import axiosInstance from "../utiles/axiosInstance";
-import { addUser } from "../utiles/userSlice";
+
+import { FaYoutube } from "react-icons/fa";
+
 import { toast } from "react-toastify";
 
+import axiosInstance from "../utiles/axiosInstance";
+import { addUser } from "../utiles/userSlice";
+
+// Login Page
 export default function Login() {
+  // states for managing email and password
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  // states for managing lading and error
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-
+  // getting current user from redux store
   const user = useSelector((store) => store.user.user);
+  // initialzing dispatch and navigate
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
+  // hook for navigating back to homepage if user is already present
   useEffect(() => {
     if (user) navigate("/");
   }, [user, navigate]);
-
+  // function for handling form submittion
   const handleSubmit = async (e) => {
+    // for preventing default behaviour
     e.preventDefault();
-
+    // validating email and password
     if (!email || !password) {
       setError("Both email and password are required");
       return;
     }
-
+    // creating a object ofemail and password
     const currentUser = {
       email,
       password,
     };
-
+    // seeting the loading state to true
     setLoading(true);
 
     try {
+      // making a login request to the server
       const res = await axiosInstance.post("/user/login", currentUser);
+      // adding user to the redux store
       dispatch(addUser(res.data));
+      // setting to the default state
       setEmail("");
       setPassword("");
       setError(null);
-      toast.success("Login successful")
+      toast.success("Login successful");
+      // navigating back to homepage
       navigate("/");
     } catch (error) {
+      // handling error while loggin in
       setError(
         error.response?.data.message || error.message || "Something went wrong"
       );
       toast.error(
-        "Registration failed ",
-        error.response?.data || error.message
+        error.response?.data.message || error.message || "Login failed"
       );
     } finally {
       setLoading(false);
@@ -57,12 +72,11 @@ export default function Login() {
   };
 
   return (
-    
     <div className="flex h-full items-center justify-center bg-gradient-to-br from-gray-50 to-gray-200 px-6 py-12">
       <div className="w-full max-w-md rounded-2xl bg-white p-8 shadow-xl">
         {/* Logo */}
         <div className="flex flex-col items-center">
-          <FaYoutube className="h-16 w-16 text-[#f03] animate-pulse drop-shadow-md" />
+          <FaYoutube className="h-16 w-16 text-blue-500 animate-pulse drop-shadow-md" />
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
             Welcome Back
           </h2>
@@ -71,6 +85,7 @@ export default function Login() {
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="mt-8 space-y-6">
+          {/* Email */}
           <div>
             <label
               htmlFor="email"
@@ -92,7 +107,7 @@ export default function Login() {
               placeholder="you@example.com"
             />
           </div>
-
+          {/* Password */}
           <div>
             <label
               htmlFor="password"
@@ -113,9 +128,9 @@ export default function Login() {
               placeholder="Enter your password"
             />
           </div>
-
+          {/* Error message */}
           {error && <p className="text-center text-xs text-red-600">{error}</p>}
-
+          {/* Submit buttton */}
           <button
             type="submit"
             disabled={!email || !password || loading}
@@ -124,7 +139,7 @@ export default function Login() {
             {loading ? "Logging in..." : "Log In"}
           </button>
         </form>
-
+        {/* navigation to sign up page */}
         <p className="mt-6 text-center text-sm text-gray-600">
           Don’t have an account?{" "}
           <Link

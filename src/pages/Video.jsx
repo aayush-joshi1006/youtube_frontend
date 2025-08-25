@@ -1,32 +1,46 @@
 import { useEffect, useState } from "react";
+
 import { useNavigate, useParams } from "react-router-dom";
+
+import { useSelector } from "react-redux";
+
+import { formatDistanceToNow } from "date-fns";
+
+import { AiFillLike } from "react-icons/ai";
+import { AiFillDislike } from "react-icons/ai";
+
+import { toast } from "react-toastify";
+
+import formatViews from "../utiles/formatViews";
+import Loading from "./Loading";
 import axiosInstance from "../utiles/axiosInstance";
 import Comments from "../components/Comments";
 import defaultAvatar from "../assets/default-avatar.jpg";
-import { AiFillLike } from "react-icons/ai";
-import { AiFillDislike } from "react-icons/ai";
-import { formatDistanceToNow } from "date-fns";
-import formatViews from "../utiles/formatViews";
-import { useSelector } from "react-redux";
-import Loading from "./Loading";
-import { toast } from "react-toastify";
 
+// Video Play page
 export default function Video() {
+  // getting video id from url
   const { id } = useParams();
 
-  const [videoDetail, setVideoDetail] = useState(null);
-  const [errorMessage, setErrorMessage] = useState("");
-  const [showFullDesc, setShowFullDesc] = useState(false);
+  const [videoDetail, setVideoDetail] = useState(null); // state for storing video details
+  const [errorMessage, setErrorMessage] = useState(""); /// state for managing error
+  const [showFullDesc, setShowFullDesc] = useState(false); // state for show more button
 
-  const navigate = useNavigate();
+  const navigate = useNavigate(); // initilizing navigation method
+  // getting current user from redux store
   const currentUser = useSelector((store) => store.user.user);
 
+  // hook for fetching video details
   useEffect(() => {
+    // function for fetching video details
     const fetchVideo = async () => {
       try {
+        // request to server for fetching video details with the help of video id
         const res = await axiosInstance.get(`/video/${id}`);
+        // setting into the video details state
         setVideoDetail(res.data);
       } catch (error) {
+        // handling error
         toast.error(
           "Unable to fetch the Video",
           error.response?.data?.message || error.message
@@ -36,16 +50,26 @@ export default function Video() {
         );
       }
     };
+    // calling the fetch video details function here
     fetchVideo();
   }, [id]);
 
+  // hook for incresing views of the video
   useEffect(() => {
+    // function for incresing video views
     const addView = async () => {
+      // checking if valid user and video id exists
       if (currentUser && videoDetail?._id) {
         try {
+          // addig user id to the views array
           await axiosInstance.put(`/video/${videoDetail?._id}/view`);
-        } catch (err) {
-          toast.error("Error updating view:", err);
+        } catch (error) {
+          // handling error
+          toast.error(
+            error.response?.data?.message ||
+              error.message ||
+              "Something went wrong"
+          );
         }
       }
     };
@@ -53,10 +77,11 @@ export default function Video() {
     addView();
   }, [currentUser, videoDetail?._id]);
 
+  // Handling error while fetching video details
   if (errorMessage) {
     return <div className="text-red-500 text-center mt-4">{errorMessage}</div>;
   }
-
+  // for managing the loading state
   if (!videoDetail) {
     return <Loading />;
   }
@@ -82,6 +107,7 @@ export default function Video() {
         <h1 className="text-2xl font-semibold mb-3 text-gray-900">
           {videoDetail.title || "Untitled Video"}
         </h1>
+        {/* upload date and views */}
         <p className="text-gray-500 text-sm mb-4">
           {formatViews(videoDetail?.views?.length || 0)} views •{" "}
           {formatDistanceToNow(new Date(videoDetail?.createdAt), {
@@ -99,12 +125,14 @@ export default function Video() {
                 navigate(`/channel/${videoDetail?.channelId?._id}`)
               }
             >
+              {/* Channel avatar */}
               <img
                 src={videoDetail?.channelId?.channelAvatar || defaultAvatar}
                 alt="Channel Avatar"
                 className="w-12 h-12 rounded-full object-cover"
               />
               <div>
+                {/* channel name */}
                 <h2 className="text-gray-900 font-semibold">
                   {videoDetail.channelId?.channelName || "Unknown Channel"}
                 </h2>
@@ -131,6 +159,7 @@ export default function Video() {
 
         {/* Description */}
         <div className="mt-4 bg-white rounded-xl shadow-md p-5 mb-6">
+          {/* Video description */}
           <p className="text-gray-700 leading-relaxed">
             {showFullDesc
               ? videoDetail.description
@@ -144,6 +173,7 @@ export default function Video() {
               </button>
             )}
           </p>
+          {/* tags of the videos */}
           {videoDetail?.tags && videoDetail.tags.length > 0 && (
             <p className="text-blue-600">
               {videoDetail.tags
@@ -155,7 +185,7 @@ export default function Video() {
           )}
         </div>
 
-        {/* Comments */}
+        {/* Comments Section */}
         <div className="bg-white rounded-xl shadow-md p-5">
           <h2 className="text-lg font-semibold mb-4 text-gray-900">Comments</h2>
           <Comments videoId={videoDetail._id} />

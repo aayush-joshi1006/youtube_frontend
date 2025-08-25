@@ -1,13 +1,15 @@
-import { useState } from "react";
-import Header from "./components/Header";
-import SideBar from "./components/SideBar";
+import { Suspense, useState } from "react";
+
 import { Outlet } from "react-router-dom";
 
+import Header from "./components/Header";
+import SideBar from "./components/SideBar";
+import Loading from "./pages/Loading";
+
 function App() {
-  const [toggleSidebar, setToggleSidebar] = useState(true);
+  const [toggleSidebar, setToggleSidebar] = useState(true); // for toggling side bar
 
   return (
-    
     <div className="h-screen w-full flex flex-col overflow-hidden transition-colors duration-500">
       {/* Header */}
       <Header sidebar={{ toggleSidebar, setToggleSidebar }} />
@@ -32,7 +34,9 @@ function App() {
 
         {/* Main Content */}
         <main className="flex-1 overflow-y-auto">
-          <Outlet />
+          <Suspense fallback={<Loading />}>
+            <Outlet />
+          </Suspense>
         </main>
 
         {/* Mobile Sidebar (below content) */}

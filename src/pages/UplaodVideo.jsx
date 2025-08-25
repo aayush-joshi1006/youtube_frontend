@@ -1,66 +1,89 @@
 import React, { useEffect, useState } from "react";
+
 import { useSelector } from "react-redux";
+
 import { useNavigate } from "react-router-dom";
-import axiosInstance from "../utiles/axiosInstance";
+
 import { toast } from "react-toastify";
 
+import axiosInstance from "../utiles/axiosInstance";
+
+// Upload video page
 export default function UplaodVideo() {
+  // getting current user
   const user = useSelector((store) => store.user.user);
+  // initializing navigation
   const navigate = useNavigate();
 
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [tag1, setTag1] = useState("");
-  const [tag2, setTag2] = useState("");
-  const [videoUpload, setVideoUpload] = useState(null);
+  const [title, setTitle] = useState(""); // for title of video
+  const [description, setDescription] = useState(""); // for video description
+  const [tag1, setTag1] = useState(""); // for tag1 input
+  const [tag2, setTag2] = useState(""); // for tag2 input
+
+  const [videoUpload, setVideoUpload] = useState(null); // for video file
+  // for managing upload state and message
   const [uploadProgress, setUploadProgress] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
   const [statusMessage, setStatusMessage] = useState("");
 
+  // navigation in case user is not logged in or does not have a channel
   useEffect(() => {
+    // if there is no user logged in
     if (!user) {
       navigate("/login");
     } else if (!user.channel) {
+      // in case there is user but no channel is created
       navigate("/createChannel");
     }
   }, [user]);
 
+  // Validating the file type of video
   const validateFile = (file) => {
+    // allowed video types
     const validTypes = ["video/mp4", "video/quicktime", "video/mov"];
+    // max allowed file size
     const maxSize = 100 * 1024 * 1024; // 100MB
+    // validating file type
     if (!validTypes.includes(file.type)) {
       return "Invalid file type. Only MP4/MOV/QUICKTIME allowed.";
     }
+    // validating file size
     if (file.size > maxSize) {
       return "File size exceeds 100MB limit.";
     }
     return null;
   };
-
+  // Seting the video to be uploaded
   const handleFileChange = (e) => {
+    // getting the file
     const file = e.target.files[0];
+    // in case no file is present exiting the function
     if (!file) return;
+    // validating file type and file size
     const error = validateFile(file);
+    // handling the error
     if (error) {
       setStatusMessage(error);
       setVideoUpload(null);
     } else {
       setStatusMessage("");
+      // setting the video file in the state of video
       setVideoUpload(file);
     }
   };
-
+  // handling form submittion
   const handleSubmit = async (e) => {
+    // preventing the default behaviour of form submittion
     e.preventDefault();
-
+    // in case any field is empty
     if (!title.trim() || !description.trim() || !videoUpload) {
       setStatusMessage("Please fill in all required fields.");
       return;
     }
-
+    // start the uploading process
     setIsUploading(true);
     setStatusMessage("");
-
+    // form data object for submitting the data
     const formData = new FormData();
     formData.append("title", title.trim());
     formData.append("description", description.trim());
@@ -69,29 +92,34 @@ export default function UplaodVideo() {
     if (tag2) formData.append("tags", tag2.trim());
 
     try {
+      // request for setting data to the database
       const res = await axiosInstance.post("/video/upload", formData, {
         headers: {
           "Content-Type": "multipart/form-data",
         },
         onUploadProgress: (progressEvent) => {
+          // for tracking file upload progess
           const present = Math.round(
             (progressEvent.loaded * 100) / progressEvent.total
           );
           setUploadProgress(present);
         },
       });
+      // Video upload success nortification
       setUploadProgress("Video Uploaded Successfully");
-      toast.success("Video uploaded successfully")
-      setUploadProgress(null);
+      toast.success("Video uploaded successfully");
       setStatusMessage("Video Uploaded Successfully");
+      // setting states to default values
+      setUploadProgress(null);
       setTitle("");
       setDescription("");
       setTag1("");
       setTag2("");
       setVideoUpload(null);
-
+      // navigating back to the homepage
       navigate("/");
     } catch (error) {
+      // managing the erros in case error occurs
       const errorMsg =
         error.response?.data?.message || "Upload failed. Try again.";
       toast.error("Upload Failed:", errorMsg);
@@ -104,6 +132,7 @@ export default function UplaodVideo() {
 
   return (
     <div className="h-[80vh] flex justify-center items-center">
+      {/* Form for video upload */}
       <form
         className="max-w-md w-full bg-white p-6 rounded-lg shadow-md"
         onSubmit={handleSubmit}
@@ -154,6 +183,7 @@ export default function UplaodVideo() {
             Tags
           </label>
           <div className="flex gap-2">
+            {/* Tag 1 */}
             <input
               type="text"
               placeholder="Tag 1"
@@ -162,6 +192,7 @@ export default function UplaodVideo() {
               className="flex-1 border rounded-lg p-2.5 text-sm"
               disabled={isUploading}
             />
+            {/* Tag 2 */}
             <input
               type="text"
               placeholder="Tag 2"

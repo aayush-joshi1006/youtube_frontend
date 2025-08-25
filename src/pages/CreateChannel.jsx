@@ -1,36 +1,44 @@
 import React, { useEffect, useState } from "react";
+
 import { useDispatch, useSelector } from "react-redux";
+
 import { useNavigate } from "react-router-dom";
+
 import axiosInstance from "../utiles/axiosInstance";
 import { addUser } from "../utiles/userSlice";
 
+// create channel page
 export default function CreateChannel() {
+  // getting current user from store
   const user = useSelector((store) => store.user.user);
-
+  // states for managing data like channel name,description, channel avatar and banner
   const [channelName, setChannelName] = useState("");
   const [description, setDescription] = useState("");
   const [channelAvatar, setChannelAvatar] = useState(null);
   const [channelBanner, setChannelBanner] = useState(null);
+  //state for managing the upload progress
   const [uploadProgress, setUploadProgress] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
   const [statusMessage, setStatusMessage] = useState("");
-
+  // initializing dispatch and navigate method
   const dispatch = useDispatch();
   const navigate = useNavigate();
-
+  // hook for managing unauthorized user and those whose channel is already created
   useEffect(() => {
     if (!user) {
-      navigate("/login");
+      navigate("/login"); // navigate to login page in case user is not looged in
     } else if (user.isChannelCreated) {
-      navigate(`/channel/${user.channel}`);
+      navigate(`/channel/${user.channel}`); // in case channel is already created
     }
   }, [user]);
-
+  // function for handling the submission of form
   const handleSubmit = async (e) => {
+    // preventing default behavior of submit
     e.preventDefault();
+    // starting the upload state
     setIsUploading(true);
     setStatusMessage("");
-
+    // creating a form data object for easy data submittion
     const formData = new FormData();
     formData.append("channelName", channelName);
     formData.append("description", description);
@@ -38,11 +46,13 @@ export default function CreateChannel() {
     if (channelBanner) formData.append("channelBanner", channelBanner);
 
     try {
+      // making request to the server for creating channel
       const res = await axiosInstance.post("/channel/create", formData, {
         headers: {
           "Content-Type": "multipart/form-data",
         },
         onUploadProgress: (progressEvent) => {
+          // method provided by axios for getting the upload progress
           const persent = Math.round(
             (progressEvent.loaded * 100) / progressEvent.total
           );
@@ -57,14 +67,16 @@ export default function CreateChannel() {
       setDescription("");
       setChannelAvatar(null);
       setChannelBanner(null);
-
+      // updating the user in the redux store too
       const { data } = await axiosInstance.get("/user");
       dispatch(addUser(data.user));
+      // navigating to the created channel
       navigate(`/channel/${res.data.channel._id}`);
     } catch (error) {
+      // in case there is an error while creating the channel
       const errorMsg =
         error.response?.data?.message || "Upload failed. Try again.";
-      console.error("Upload Failed:", errorMsg);
+      toast.error("Upload Failed:", errorMsg);
       setStatusMessage(errorMsg);
       setUploadProgress(null);
     } finally {
@@ -73,7 +85,6 @@ export default function CreateChannel() {
   };
 
   return (
-    
     <div className="flex justify-center items-center min-h-[80vh] px-4">
       <form
         className="bg-white w-full max-w-lg p-6 rounded-2xl shadow-md"

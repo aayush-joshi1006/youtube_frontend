@@ -1,16 +1,21 @@
 import { useEffect, useState } from "react";
-import { BsThreeDotsVertical } from "react-icons/bs";
+
 import { useNavigate } from "react-router-dom";
-import defaultAvatar from "../assets/default-avatar.jpg";
+
 import { formatDistanceToNow } from "date-fns";
+
+import defaultAvatar from "../assets/default-avatar.jpg";
 import formatViews from "../utiles/formatViews";
 import formatDuration from "../utiles/formatDuration";
+import NotFoundImage from "../assets/NotFound.avif";
 
+// Thumbnail component
 export default function Thumbnail({ video }) {
+  // state for pausing for 0.3seconds before load
   const [loaded, setLoaded] = useState(false);
-
+  // initializing navigation
   const navigate = useNavigate();
-
+  // hook for causing a delay of 0.3 sec
   useEffect(() => {
     const timer = setTimeout(() => {
       setLoaded(true);
@@ -29,7 +34,7 @@ export default function Thumbnail({ video }) {
       {/* Thumbnail */}
       <div className="relative w-full overflow-hidden rounded-xl">
         <img
-          src={video?.thumbnailUrl}
+          src={video?.thumbnailUrl || NotFoundImage}
           loading="lazy"
           alt={video?.title}
           className="w-full h-full object-cover aspect-video rounded-xl transition-transform duration-500 hover:scale-105 hover:ring-2 hover:ring-blue-600"

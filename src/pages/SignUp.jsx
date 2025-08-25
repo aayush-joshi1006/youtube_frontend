@@ -1,38 +1,49 @@
-import { Link, useNavigate } from "react-router-dom";
-import { FaYoutube } from "react-icons/fa";
 import { useEffect, useState } from "react";
-import axiosInstance from "../utiles/axiosInstance.js";
+
+import { Link, useNavigate } from "react-router-dom";
+
 import { useDispatch, useSelector } from "react-redux";
-import { addUser } from "../utiles/userSlice.js";
+
 import { toast } from "react-toastify";
 
+import { FaYoutube } from "react-icons/fa";
+
+import axiosInstance from "../utiles/axiosInstance.js";
+import { addUser } from "../utiles/userSlice.js";
+
+// Sign Up Page
 export default function SignUp() {
+  // states for managing email,username,password
   const [email, setEmail] = useState("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  // states for manging error and loading
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
-
+  // getting current user from redux store
   const user = useSelector((store) => store.user.user);
-
+  // initializing the navigate and dispatch method
   const navigate = useNavigate();
   const dispatch = useDispatch();
-
+  // in case user is already there nevigate back to the homepage
   useEffect(() => {
     if (user) {
       navigate("/");
     }
   }, [user, navigate]);
 
+  // function for handling form submition
   const handleSubmit = async (e) => {
+    // preventing the default behavior of form submit
     e.preventDefault();
+    // trimming out the username,email and password
     const trimmedEmail = email.trim();
     const trimmedUsername = username.trim();
     const trimmedPassword = password.trim();
 
-    //  /user/register
+    //  exiting function in case any of the mendetory texts are missing
     if (!trimmedEmail || !trimmedPassword || !trimmedUsername) return;
-
+    // creating a new user object
     let newUser = {
       email: trimmedEmail,
       username: trimmedUsername,
@@ -40,15 +51,21 @@ export default function SignUp() {
     };
     setLoading(true);
     try {
+      // sending request for adding new user to the database
       const res = await axiosInstance.post("/user/register", newUser);
+      // saving the user to the redux store
       dispatch(addUser(res.data));
+      // setting all values to initial state
       setEmail("");
       setUsername("");
       setPassword("");
       setError(null);
-      toast.success("User registered successfully")
+
+      toast.success("User registered successfully");
+      // navigating to the homepage
       navigate("/");
     } catch (error) {
+      // handling the error
       setError(error.response?.data.message || "Something went wrong");
       toast.error(
         "Registration failed ",
@@ -60,12 +77,11 @@ export default function SignUp() {
   };
 
   return (
-    
     <div className="flex h-full items-center justify-center bg-gradient-to-br from-gray-50 to-gray-200 px-6 py-12">
       <div className="w-full max-w-md rounded-2xl bg-white p-8 shadow-xl">
-        {/* Logo + Heading */}
+        {/* Logo and Heading */}
         <div className="flex flex-col items-center">
-          <FaYoutube className="h-16 w-16 text-[#f03] animate-pulse drop-shadow-md" />
+          <FaYoutube className="h-16 w-16 text-blue-500 animate-pulse drop-shadow-md" />
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
             Create Your Account
           </h2>
@@ -76,6 +92,7 @@ export default function SignUp() {
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="mt-8 space-y-6">
+          {/* Email address */}
           <div>
             <label
               htmlFor="email"
@@ -97,7 +114,7 @@ export default function SignUp() {
               placeholder="you@example.com"
             />
           </div>
-
+          {/* Username */}
           <div>
             <label
               htmlFor="username"
@@ -118,7 +135,7 @@ export default function SignUp() {
               placeholder="Choose a username"
             />
           </div>
-
+          {/* Password */}
           <div>
             <label
               htmlFor="password"
@@ -139,9 +156,9 @@ export default function SignUp() {
               placeholder="Enter your password"
             />
           </div>
-
+          {/* Error display */}
           {error && <p className="text-center text-xs text-red-600">{error}</p>}
-
+          {/* Submit button */}
           <button
             type="submit"
             disabled={!email || !username || !password || loading}
@@ -151,7 +168,7 @@ export default function SignUp() {
           </button>
         </form>
 
-        {/* Footer */}
+        {/* navigation for log in */}
         <p className="mt-6 text-center text-sm text-gray-600">
           Already have an account?{" "}
           <Link

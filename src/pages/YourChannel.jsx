@@ -1,34 +1,48 @@
 import { useEffect, useRef, useState } from "react";
+
 import { useNavigate, useParams } from "react-router-dom";
-import axiosInstance from "../utiles/axiosInstance";
-import Loading from "./Loading";
-import { formatDistanceToNow } from "date-fns";
-import formatDuration from "../utiles/formatDuration.js";
-import formatViews from "../utiles/formatViews.js";
-import { BsThreeDotsVertical } from "react-icons/bs";
+
 import { useSelector } from "react-redux";
-import EditVideo from "../components/EditVideo.jsx";
+
+import { formatDistanceToNow } from "date-fns";
+
+import { BsThreeDotsVertical } from "react-icons/bs";
+
 import { toast } from "react-toastify";
 
+import EditVideo from "../components/EditVideo.jsx";
+import Loading from "./Loading";
+import axiosInstance from "../utiles/axiosInstance";
+import formatDuration from "../utiles/formatDuration.js";
+import formatViews from "../utiles/formatViews.js";
+import defaultAvatar from "../assets/default-avatar.jpg";
+import NotFoundImage from "../assets/NotFound.avif";
+
 export default function YourChannel() {
+  // getting channel id from the url
   const { id } = useParams();
 
-  const [channel, setChannel] = useState(null);
-  const [error, setError] = useState(null);
-  const [message, setMessage] = useState("");
-  const [loaded, setLoaded] = useState(false);
-  const [openDropdown, setOpenDropdown] = useState(null);
-  const [showConfirm, setShowConfirm] = useState(false);
-  const [targetVideo, setTargetVideo] = useState(null);
-  const [showEdit, setShowEdit] = useState(false);
-  const [editingVideo, setEditingVideo] = useState(null);
+  const [channel, setChannel] = useState(null); // for managing channel details
+  const [message, setMessage] = useState(""); // for setting the channel created time
 
-  const dropdownRef = useRef(null);
+  const [error, setError] = useState(null); // for managing the error
+  const [loaded, setLoaded] = useState(false); // for managing laoding state of videos
 
-  const navigate = useNavigate();
+  const [openDropdown, setOpenDropdown] = useState(null); // dropdown menu for videos
 
+  const [targetVideo, setTargetVideo] = useState(null); // target id of video to be deleted
+  const [showConfirm, setShowConfirm] = useState(false); // for displaying the confirm dialog box
+
+  const [showEdit, setShowEdit] = useState(false); // showing the edit dialog box
+  const [editingVideo, setEditingVideo] = useState(null); // taget id of video details to be editted
+
+  const dropdownRef = useRef(null); // reference for dropdown
+
+  const navigate = useNavigate(); // initializing navigation instance
+  // getting current user from redux store
   const currentUser = useSelector((store) => store.user.user);
 
+  // 0.3 seconds delay before videos load
   useEffect(() => {
     const timer = setTimeout(() => {
       setLoaded(true);
@@ -37,22 +51,30 @@ export default function YourChannel() {
     return () => clearTimeout(timer);
   }, []);
 
+  // hook for fetching channel details
   useEffect(() => {
+    // function for fetching channel details
     let fetchChannel = async () => {
       try {
+        // request to the server for getting channel details
         const res = await axiosInstance.get(`/channel/${id}`);
+        // setting the state of channel details
         setChannel(res.data.channel);
       } catch (error) {
+        // handling the errors here
         setError(error.response?.data.message || "Something went wrong");
         toast.error(
-          "Registration failed ",
-          error.response?.data || error.message
+          error.response?.data?.message ||
+            error.message ||
+            "Something went wrong"
         );
       }
     };
+    // only run the fetch channel details if there is a id present
     if (id) fetchChannel();
   }, [id]);
 
+  // for managing the the state of when the user joined
   useEffect(() => {
     if (channel) {
       setMessage(
@@ -63,7 +85,7 @@ export default function YourChannel() {
     }
   }, [channel]);
 
-  // --- Close dropdown on outside click
+  // Close dropdown on outside click
   useEffect(() => {
     function handleClickOutside(e) {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
@@ -77,7 +99,7 @@ export default function YourChannel() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [openDropdown]);
 
-  // --- Auto close after 3 seconds
+  // Auto close dropdown after 3 seconds
   useEffect(() => {
     if (openDropdown) {
       const timer = setTimeout(() => setOpenDropdown(null), 3000);
@@ -85,43 +107,54 @@ export default function YourChannel() {
     }
   }, [openDropdown]);
 
+  // handlingthe click function so that delete dialog can be viewed
   const handleDeleteClick = (videoId) => {
     setTargetVideo(videoId);
     setShowConfirm(true);
   };
 
+  // function for handling the deleting of the video
   const confirmDelete = async () => {
     try {
+      // sending delete request for deleting the video
+      await axiosInstance.delete(`/video/delete/${targetVideo}`);
+      // removing video data from the frontend
       setChannel((prev) => ({
         ...prev,
         videos: prev.videos.filter((v) => v._id !== targetVideo),
       }));
 
-      await axiosInstance.delete(`/video/delete/${targetVideo}`);
       toast.success("Video deleted successfully");
     } catch (error) {
-      toast.error("Error deleting video", error);
+      // handling the error while deleting video
+      toast.error(
+        error.response?.data?.message || error.message || "Something went wrong"
+      );
     } finally {
       setShowConfirm(false);
       setTargetVideo(null);
     }
   };
 
+  // function for opening the edit video dialog box
   const handleEditClick = (video) => {
     setEditingVideo(video);
     setShowEdit(true);
   };
 
+  // in case there is error while fetching channel details or any other errors
   if (error)
     return <div className="text-center mt-4 text-red-500"> Error: {error}</div>;
+  // while the channel is not loaded
   if (!channel) return <Loading />;
 
   return (
     <>
+      {/* Background banner */}
       <div
         className="relative h-64 border-b-2 shadow-xl"
         style={{
-          backgroundImage: `url(${channel.channelBanner})`,
+          backgroundImage: `url(${channel.channelBanner || NotFoundImage})`,
           backgroundSize: "cover",
           backgroundPosition: "center",
         }}
@@ -129,9 +162,9 @@ export default function YourChannel() {
         {/* Overlay */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
 
-        {/* Avatar */}
+        {/* channel Avatar */}
         <img
-          src={channel.channelAvatar}
+          src={channel.channelAvatar || defaultAvatar}
           alt="Profile pic"
           className="w-32 h-32 rounded-full object-cover object-center absolute -bottom-14 left-6 border-4 border-white shadow-xl"
         />
@@ -154,7 +187,8 @@ export default function YourChannel() {
               lg:grid-cols-3
               xl:grid-cols-4 mt-32 "
       >
-        {channel.videos.map((video) => (
+        {/* conditional render of videos in the channel */}
+        {channel?.videos.map((video) => (
           <div
             className={`flex flex-col p-4 cursor-pointer transition-all duration-700 transform ${
               loaded ? "scale-100 opacity-100" : "scale-0 opacity-0"
@@ -170,6 +204,7 @@ export default function YourChannel() {
                 alt={video?.title}
                 className="w-full h-full object-cover aspect-video rounded-xl transition-transform duration-500 hover:scale-105 hover:ring-2 hover:ring-blue-600"
               />
+              {/* video duration */}
               <span className="absolute bottom-2 right-2 bg-black/80 text-white text-xs px-2 py-1 rounded-md">
                 {formatDuration(video.duration)}
               </span>
@@ -188,7 +223,9 @@ export default function YourChannel() {
                   })}
                 </p>
               </div>
-              {currentUser.channel === channel._id ? (
+              {/* only if user id matches with the channel owner */}
+              {currentUser?.channel === channel?._id ? (
+                // dropdown menu
                 <div
                   className="flex relative justify-center items-center p-1 hover:bg-gray-300 rounded-full cursor-pointer"
                   onClick={(e) => {
@@ -206,6 +243,7 @@ export default function YourChannel() {
                       onClick={(e) => e.stopPropagation()}
                       ref={dropdownRef}
                     >
+                      {/* Edit button */}
                       <button
                         className="w-full px-4 py-2 text-left hover:bg-gray-100"
                         onClick={() => {
@@ -215,6 +253,7 @@ export default function YourChannel() {
                       >
                         Edit
                       </button>
+                      {/* Delete button */}
                       <button
                         className="w-full px-4 py-2 text-left text-red-500 hover:bg-red-100"
                         onClick={() => handleDeleteClick(video._id)}
@@ -230,6 +269,7 @@ export default function YourChannel() {
             </div>
           </div>
         ))}
+        {/* delete video dialog box */}
         {showConfirm && (
           <div
             className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
@@ -247,6 +287,7 @@ export default function YourChannel() {
               </p>
 
               <div className="mt-6 flex justify-end gap-3">
+                {/* Cancel button */}
                 <button
                   type="button"
                   onClick={() => setShowConfirm(false)}
@@ -254,6 +295,7 @@ export default function YourChannel() {
                 >
                   Cancel
                 </button>
+                {/* Delete video button */}
                 <button
                   type="button"
                   onClick={confirmDelete}
@@ -266,6 +308,7 @@ export default function YourChannel() {
           </div>
         )}
 
+        {/* Edit video dialog box */}
         {showEdit && editingVideo && (
           <div
             className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
@@ -275,7 +318,7 @@ export default function YourChannel() {
               className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl"
               onClick={(e) => e.stopPropagation()}
             >
-              {/* Import & Render EditVideo Component */}
+              {/* Render EditVideo Component */}
               <EditVideo
                 video={editingVideo}
                 onClose={() => setShowEdit(false)}
